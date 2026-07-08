@@ -35,6 +35,7 @@
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     input[type="number"] { -moz-appearance: textfield; }
+    input[type="date"]::-webkit-calendar-picker-indicator { width: 100%; height: 100%; opacity: 0; cursor: pointer; }
     .safe-top { padding-top: env(safe-area-inset-top); }
     .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
     .noscroll::-webkit-scrollbar { display: none; }
@@ -104,7 +105,7 @@ const DEFAULT_EXERCISES = [
 const uid = () => Math.random().toString(36).slice(2, 10);
 const pad = (n) => String(n).padStart(2, "0");
 const todayKey = () => {
-  const d = /* @__PURE__ */ new Date();
+  const d = new Date();
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
@@ -188,15 +189,7 @@ async function driveUpload(jsonString) {
   } else {
     const boundary = "gymlog" + uid();
     const metadata = { name: DRIVE_FILENAME, mimeType: "application/json" };
-    const body = `--${boundary}\r
-Content-Type: application/json; charset=UTF-8\r
-\r
-${JSON.stringify(metadata)}\r
---${boundary}\r
-Content-Type: application/json\r
-\r
-${jsonString}\r
---${boundary}--`;
+    const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json\r\n\r\n${jsonString}\r\n--${boundary}--`;
     const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` },
@@ -217,7 +210,7 @@ async function driveDownload() {
   return await res.json();
 }
 function IconBtn({ children, onClick, label }) {
-  return /* @__PURE__ */ React.createElement(
+  return React.createElement(
     "button",
     {
       onClick,
@@ -229,7 +222,7 @@ function IconBtn({ children, onClick, label }) {
 }
 function Stepper({ value, onChange, step, min = 0, unit }) {
   const set = (v) => onChange(Math.max(min, Math.round(v * 100) / 100));
-  return /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "flex items-center gap-2" }, React.createElement(
     "button",
     {
       onClick: () => set(value - step),
@@ -237,7 +230,7 @@ function Stepper({ value, onChange, step, min = 0, unit }) {
       "aria-label": "감소"
     },
     "−"
-  ), /* @__PURE__ */ React.createElement("div", { className: "flex min-w-[92px] items-baseline justify-center rounded-xl bg-base px-2 py-1" }, /* @__PURE__ */ React.createElement(
+  ), React.createElement("div", { className: "flex min-w-[92px] items-baseline justify-center rounded-xl bg-base px-2 py-1" }, React.createElement(
     "input",
     {
       type: "number",
@@ -247,7 +240,7 @@ function Stepper({ value, onChange, step, min = 0, unit }) {
       onFocus: (e) => e.target.select(),
       className: "w-14 bg-transparent text-center text-2xl font-bold text-ink outline-none tnum"
     }
-  ), /* @__PURE__ */ React.createElement("span", { className: "text-sm text-dim" }, unit)), /* @__PURE__ */ React.createElement(
+  ), React.createElement("span", { className: "text-sm text-dim" }, unit)), React.createElement(
     "button",
     {
       onClick: () => set(value + step),
@@ -258,7 +251,7 @@ function Stepper({ value, onChange, step, min = 0, unit }) {
   ));
 }
 function SetRow({ index, set, onChange, onRemove }) {
-  return /* @__PURE__ */ React.createElement("div", { className: "rounded-2xl bg-surface p-3" }, /* @__PURE__ */ React.createElement("div", { className: "mb-2 flex items-center justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "rounded-lg bg-elevated px-2.5 py-1 text-sm font-bold text-volt" }, index + 1, "세트"), /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "rounded-2xl bg-surface p-3" }, React.createElement("div", { className: "mb-2 flex items-center justify-between" }, React.createElement("span", { className: "rounded-lg bg-elevated px-2.5 py-1 text-sm font-bold text-volt" }, index + 1, "세트"), React.createElement(
     "button",
     {
       onClick: onRemove,
@@ -266,7 +259,7 @@ function SetRow({ index, set, onChange, onRemove }) {
       "aria-label": "세트 삭제"
     },
     "✕"
-  )), /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-2 py-1" }, /* @__PURE__ */ React.createElement("span", { className: "w-9 text-sm text-mute" }, "무게"), /* @__PURE__ */ React.createElement(Stepper, { value: set.weight, onChange: (v) => onChange(__spreadProps(__spreadValues({}, set), { weight: v })), step: 2.5, unit: "kg" })), /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-2 py-1" }, /* @__PURE__ */ React.createElement("span", { className: "w-9 text-sm text-mute" }, "횟수"), /* @__PURE__ */ React.createElement(Stepper, { value: set.reps, onChange: (v) => onChange(__spreadProps(__spreadValues({}, set), { reps: v })), step: 1, unit: "회" })), /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex items-center gap-2" }, /* @__PURE__ */ React.createElement("span", { className: "text-mute" }, "📝"), /* @__PURE__ */ React.createElement(
+  )), React.createElement("div", { className: "flex items-center justify-between gap-2 py-1" }, React.createElement("span", { className: "w-9 text-sm text-mute" }, "무게"), React.createElement(Stepper, { value: set.weight, onChange: (v) => onChange(__spreadProps(__spreadValues({}, set), { weight: v })), step: 2.5, unit: "kg" })), React.createElement("div", { className: "flex items-center justify-between gap-2 py-1" }, React.createElement("span", { className: "w-9 text-sm text-mute" }, "횟수"), React.createElement(Stepper, { value: set.reps, onChange: (v) => onChange(__spreadProps(__spreadValues({}, set), { reps: v })), step: 1, unit: "회" })), React.createElement("div", { className: "mt-2 flex items-center gap-2" }, React.createElement("span", { className: "text-mute" }, "📝"), React.createElement(
     "input",
     {
       value: set.memo,
@@ -278,7 +271,7 @@ function SetRow({ index, set, onChange, onRemove }) {
 }
 function ExerciseCard({ exercise, sets, onAddSet, onChangeSet, onRemoveSet, onRemoveExercise }) {
   const volume = sets.reduce((a, s) => a + (s.weight * s.reps || 0), 0);
-  return /* @__PURE__ */ React.createElement("div", { className: "rounded-3xl border border-line bg-elevated/40 p-4" }, /* @__PURE__ */ React.createElement("div", { className: "mb-2 flex items-center justify-between" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement("h3", { className: "text-lg font-bold text-ink" }, exercise.name), /* @__PURE__ */ React.createElement("span", { className: "rounded-full bg-elevated px-2.5 py-0.5 text-xs text-mute" }, exercise.part)), /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "rounded-3xl border border-line bg-elevated/40 p-4" }, React.createElement("div", { className: "mb-2 flex items-center justify-between" }, React.createElement("div", { className: "flex items-center gap-2" }, React.createElement("h3", { className: "text-lg font-bold text-ink" }, exercise.name), React.createElement("span", { className: "rounded-full bg-elevated px-2.5 py-0.5 text-xs text-mute" }, exercise.part)), React.createElement(
     "button",
     {
       onClick: onRemoveExercise,
@@ -286,7 +279,7 @@ function ExerciseCard({ exercise, sets, onAddSet, onChangeSet, onRemoveSet, onRe
       "aria-label": "루틴에서 빼기"
     },
     "✕"
-  )), sets.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "mb-1 flex items-center justify-between text-xs text-dim" }, /* @__PURE__ */ React.createElement("span", null, sets.length, "세트"), /* @__PURE__ */ React.createElement("span", { className: "tnum" }, "볼륨 ", volume.toLocaleString(), " kg")), /* @__PURE__ */ React.createElement("div", { className: "flex flex-col gap-2" }, sets.map((s, i) => /* @__PURE__ */ React.createElement(
+  )), sets.length > 0 && React.createElement("div", { className: "mb-1 flex items-center justify-between text-xs text-dim" }, React.createElement("span", null, sets.length, "세트"), React.createElement("span", { className: "tnum" }, "볼륨 ", volume.toLocaleString(), " kg")), React.createElement("div", { className: "flex flex-col gap-2" }, sets.map((s, i) => React.createElement(
     SetRow,
     {
       key: s.id,
@@ -295,7 +288,7 @@ function ExerciseCard({ exercise, sets, onAddSet, onChangeSet, onRemoveSet, onRe
       onChange: (ns) => onChangeSet(exercise.id, s.id, ns),
       onRemove: () => onRemoveSet(exercise.id, s.id)
     }
-  ))), /* @__PURE__ */ React.createElement(
+  ))), React.createElement(
     "button",
     {
       onClick: () => onAddSet(exercise.id),
@@ -305,13 +298,13 @@ function ExerciseCard({ exercise, sets, onAddSet, onChangeSet, onRemoveSet, onRe
   ));
 }
 function Sheet({ title, onClose, children }) {
-  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex flex-col justify-end bg-black/60", onClick: onClose }, /* @__PURE__ */ React.createElement(
+  return React.createElement("div", { className: "fixed inset-0 z-50 flex flex-col justify-end bg-black/60", onClick: onClose }, React.createElement(
     "div",
     {
       className: "max-h-[88vh] overflow-y-auto rounded-t-3xl border-t border-line bg-surface p-5 safe-bottom noscroll",
       onClick: (e) => e.stopPropagation()
     },
-    /* @__PURE__ */ React.createElement("div", { className: "mb-4 flex items-center justify-between" }, /* @__PURE__ */ React.createElement("h2", { className: "text-xl font-bold text-ink" }, title), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "h-9 w-9 rounded-lg bg-elevated text-mute active:scale-90" }, "✕")),
+    React.createElement("div", { className: "mb-4 flex items-center justify-between" }, React.createElement("h2", { className: "text-xl font-bold text-ink" }, title), React.createElement("button", { onClick: onClose, className: "h-9 w-9 rounded-lg bg-elevated text-mute active:scale-90" }, "✕")),
     children
   ));
 }
@@ -324,27 +317,54 @@ function App() {
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
   const loaded = useRef(false);
+
   useEffect(() => {
     const s = loadStore();
     if (s) {
       setCustomExercises(s.customExercises || []);
       setHistory(s.history || {});
-      if (s.sessionDate === todayKey()) {
-        setSession(s.session || {});
-        setRoutine(s.routine || Object.keys(s.session || {}));
-        setSessionDate(s.sessionDate);
+      
+      const today = todayKey();
+      setSessionDate(today);
+      
+      // 앱을 처음 켰을 때, 이전 기록이 '오늘' 것일 때만 불러옵니다.
+      if (s.sessionDate === today) {
+        if (s.session) setSession(s.session);
+        if (s.routine) setRoutine(s.routine);
+      } else {
+        setSession({});
+        setRoutine([]);
       }
     }
     loaded.current = true;
   }, []);
+
   useEffect(() => {
     if (!loaded.current) return;
     saveStore({ version: 2, customExercises, history, session, routine, sessionDate });
   }, [customExercises, history, session, routine, sessionDate]);
+
   const showToast = (msg, kind = "ok") => {
     setToast({ msg, kind });
     setTimeout(() => setToast(null), 2200);
   };
+
+  const changeSessionDate = (newDate) => {
+    setSessionDate(newDate);
+    if (history[newDate]) {
+      const pastEntries = history[newDate].entries;
+      const ids = pastEntries.map(e => e.exerciseId);
+      setRoutine(ids);
+      const pastSession = {};
+      pastEntries.forEach(e => pastSession[e.exerciseId] = e.sets);
+      setSession(pastSession);
+      showToast(`${fmtShort(newDate)} 기록을 불러왔습니다.`);
+    } else {
+      setRoutine([]);
+      setSession({});
+    }
+  };
+
   const allExercises = useMemo(() => [...DEFAULT_EXERCISES, ...customExercises], [customExercises]);
   const byId = useMemo(() => {
     const m = {};
@@ -355,6 +375,32 @@ function App() {
     () => routine.map((id) => byId[id]).filter(Boolean),
     [routine, byId]
   );
+  
+  const weeklyStat = useMemo(() => {
+    const today = new Date();
+    const day = today.getDay(); 
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    const startOfWeek = new Date(today.getFullYear(), today.getMonth(), diff);
+    startOfWeek.setHours(0,0,0,0);
+
+    let count = 0;
+    let volume = 0;
+
+    Object.keys(history).forEach(dateStr => {
+      const [y, m, d] = dateStr.split("-").map(Number);
+      const entryDate = new Date(y, m - 1, d);
+      if (entryDate >= startOfWeek) {
+        count++;
+        history[dateStr].entries.forEach(en => {
+          en.sets.forEach(s => {
+            volume += (s.weight * s.reps) || 0;
+          });
+        });
+      }
+    });
+    return { count, volume };
+  }, [history]);
+
   const prefillFor = (exId) => {
     const cur = session[exId];
     if (cur && cur.length) {
@@ -369,7 +415,8 @@ function App() {
         return { weight: l.weight, reps: l.reps };
       }
     }
-    return { weight: 20, reps: 10 };
+    // 기본값을 0으로 변경
+    return { weight: 0, reps: 0 };
   };
   const addSet = (exId) => {
     const { weight, reps } = prefillFor(exId);
@@ -409,7 +456,7 @@ function App() {
     setRoutine(ids);
     showToast(`${fmtShort(dates[0])} 루틴을 불러왔습니다.`);
   };
-  const saveToday = () => {
+  const saveSession = () => {
     const entries = routine.filter((exId) => session[exId] && session[exId].length).map((exId) => {
       const ex = byId[exId] || { name: "(삭제된 종목)", part: "" };
       return { exerciseId: exId, name: ex.name, part: ex.part, sets: session[exId] };
@@ -418,10 +465,8 @@ function App() {
       showToast("기록된 세트가 없습니다.", "danger");
       return;
     }
-    const key = todayKey();
-    setHistory((p) => __spreadProps(__spreadValues({}, p), { [key]: { savedAt: (/* @__PURE__ */ new Date()).toISOString(), entries } }));
-    setSessionDate(key);
-    showToast("오늘 운동이 저장되었습니다.");
+    setHistory((p) => __spreadProps(__spreadValues({}, p), { [sessionDate]: { savedAt: (new Date()).toISOString(), entries } }));
+    showToast(`${fmtShort(sessionDate)} 운동이 저장되었습니다.`);
   };
   const stat = useMemo(() => {
     let setCount = 0, volume = 0, exCount = 0;
@@ -435,90 +480,147 @@ function App() {
     });
     return { setCount, volume, exCount };
   }, [session, routine]);
-  return /* @__PURE__ */ React.createElement("div", { className: "mx-auto flex min-h-full max-w-md flex-col" }, /* @__PURE__ */ React.createElement("header", { className: "safe-top sticky top-0 z-30 border-b border-line bg-base/90 px-5 pb-3 pt-4 backdrop-blur" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-start justify-between" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-xs font-semibold tracking-widest text-volt" }, "오늘의 운동"), /* @__PURE__ */ React.createElement("h1", { className: "mt-0.5 text-2xl font-extrabold text-ink" }, fmtHeader(todayKey()))), /* @__PURE__ */ React.createElement("div", { className: "flex gap-2" }, /* @__PURE__ */ React.createElement(IconBtn, { onClick: () => setModal("progress"), label: "그래프" }, "📈"), /* @__PURE__ */ React.createElement(IconBtn, { onClick: () => setModal("calendar"), label: "달력" }, "📅"), /* @__PURE__ */ React.createElement(IconBtn, { onClick: () => setModal("backup"), label: "백업" }, "☁️"))), /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex gap-4 text-xs text-mute tnum" }, /* @__PURE__ */ React.createElement("span", null, "종목 ", /* @__PURE__ */ React.createElement("b", { className: "text-ink" }, stat.exCount)), /* @__PURE__ */ React.createElement("span", null, "세트 ", /* @__PURE__ */ React.createElement("b", { className: "text-ink" }, stat.setCount)), /* @__PURE__ */ React.createElement("span", null, "볼륨 ", /* @__PURE__ */ React.createElement("b", { className: "text-ink" }, stat.volume.toLocaleString()), " kg"))), /* @__PURE__ */ React.createElement("main", { className: "flex-1 space-y-3 px-4 py-4 pb-40" }, routineExercises.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "mt-16 flex flex-col items-center gap-4 text-center" }, /* @__PURE__ */ React.createElement("p", { className: "text-mute" }, "오늘 할 운동을 담아 나만의 루틴을 만들어보세요."), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => setModal("picker"),
-      className: "rounded-2xl bg-volt px-6 py-3 text-base font-bold text-base active:scale-[0.99]"
-    },
-    "＋ 운동 추가"
-  ), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: loadLastRoutine,
-      className: "text-sm font-semibold text-mute underline underline-offset-4 active:text-volt"
-    },
-    "지난 운동과 똑같이 불러오기"
-  )) : /* @__PURE__ */ React.createElement(React.Fragment, null, routineExercises.map((ex) => /* @__PURE__ */ React.createElement(
-    ExerciseCard,
-    {
-      key: ex.id,
-      exercise: ex,
-      sets: session[ex.id] || [],
-      onAddSet: addSet,
-      onChangeSet: changeSet,
-      onRemoveSet: removeSet,
-      onRemoveExercise: () => removeExercise(ex.id)
-    }
-  )), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => setModal("picker"),
-      className: "w-full rounded-2xl border-2 border-dashed border-line py-4 text-base font-bold text-mute active:scale-[0.99] active:border-volt active:text-volt"
-    },
-    "＋ 운동 추가 / 편집"
-  ))), /* @__PURE__ */ React.createElement("div", { className: "safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-line bg-base/95 p-4 backdrop-blur" }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: saveToday,
-      className: "w-full rounded-2xl bg-volt py-4 text-lg font-extrabold text-base active:scale-[0.99]"
-    },
-    "오늘 운동 저장"
-  )), toast && /* @__PURE__ */ React.createElement("div", { className: "fixed inset-x-0 bottom-24 z-50 mx-auto w-fit rounded-full px-5 py-2.5 text-sm font-semibold shadow-lg " + (toast.kind === "danger" ? "bg-danger text-white" : "bg-ok text-base") }, toast.msg), modal === "picker" && /* @__PURE__ */ React.createElement(
-    PickerSheet,
-    {
-      allExercises,
-      routine,
-      onToggle: toggleRoutine,
-      onAddCustom: (name, part) => {
-        const id = "u" + uid();
-        setCustomExercises((p) => [...p, { id, name, part, custom: true }]);
-        setRoutine((p) => [...p, id]);
-        showToast("종목을 만들어 오늘 루틴에 담았습니다.");
-      },
-      onDeleteCustom: (id) => {
-        setCustomExercises((p) => p.filter((e) => e.id !== id));
-        setRoutine((p) => p.filter((x) => x !== id));
-      },
-      onLoadLast: loadLastRoutine,
-      onClose: () => setModal(null)
-    }
-  ), modal === "calendar" && /* @__PURE__ */ React.createElement(
-    CalendarSheet,
-    {
-      history,
-      onDelete: (key) => setHistory((p) => {
-        const c = __spreadValues({}, p);
-        delete c[key];
-        return c;
-      }),
-      onClose: () => setModal(null)
-    }
-  ), modal === "progress" && /* @__PURE__ */ React.createElement(ProgressSheet, { history, onClose: () => setModal(null) }), modal === "backup" && /* @__PURE__ */ React.createElement(
-    BackupSheet,
-    {
-      buildData: () => ({ version: 2, customExercises, history, session, routine, sessionDate, exportedAt: (/* @__PURE__ */ new Date()).toISOString() }),
-      applyData: (data) => {
-        setCustomExercises(data.customExercises || []);
-        setHistory(data.history || {});
-        if (data.session) setSession(data.session);
-        if (data.routine) setRoutine(data.routine);
-        if (data.sessionDate) setSessionDate(data.sessionDate);
-      },
-      showToast,
-      onClose: () => setModal(null)
-    }
-  ));
+
+  const isToday = sessionDate === todayKey();
+
+  return React.createElement("div", { className: "mx-auto flex min-h-full max-w-md flex-col" }, 
+    React.createElement("header", { className: "safe-top sticky top-0 z-30 border-b border-line bg-base/90 px-5 pb-3 pt-4 backdrop-blur" }, 
+      React.createElement("div", { className: "flex items-start justify-between" }, 
+        React.createElement("div", null, 
+          React.createElement("div", { className: "flex items-center justify-between" },
+            React.createElement("p", { className: "text-xs font-semibold tracking-widest " + (isToday ? "text-volt" : "text-danger") }, isToday ? "오늘의 운동" : "과거 기록 수정 모드"),
+            !isToday && React.createElement("button", { onClick: () => changeSessionDate(todayKey()), className: "ml-3 rounded bg-elevated px-2 py-0.5 text-xs text-mute active:scale-90" }, "오늘로 복귀")
+          ),
+          React.createElement("label", { className: "relative mt-0.5 flex items-center gap-1 cursor-pointer" }, 
+            React.createElement("h1", { className: "text-2xl font-extrabold text-ink" }, fmtHeader(sessionDate)),
+            React.createElement("span", { className: "text-mute" }, "▾"),
+            React.createElement("input", { type: "date", value: sessionDate, onChange: (e) => e.target.value && changeSessionDate(e.target.value), className: "absolute inset-0 opacity-0 cursor-pointer" })
+          )
+        ), 
+        React.createElement("div", { className: "flex gap-2" }, 
+          React.createElement(IconBtn, { onClick: () => setModal("progress"), label: "그래프" }, "📈"), 
+          React.createElement(IconBtn, { onClick: () => setModal("calendar"), label: "달력" }, "📅"), 
+          React.createElement(IconBtn, { onClick: () => setModal("backup"), label: "백업" }, "☁️")
+        )
+      ), 
+      React.createElement("div", { className: "mt-2 flex gap-4 text-xs text-mute tnum" }, 
+        React.createElement("span", null, "현재 뷰: 종목 ", React.createElement("b", { className: "text-ink" }, stat.exCount)), 
+        React.createElement("span", null, "세트 ", React.createElement("b", { className: "text-ink" }, stat.setCount)), 
+        React.createElement("span", null, "볼륨 ", React.createElement("b", { className: "text-ink" }, stat.volume.toLocaleString()), " kg")
+      )
+    ), 
+    React.createElement("main", { className: "flex-1 space-y-3 px-4 py-4 pb-40" }, 
+      
+      React.createElement("div", { className: "mb-4 flex items-center justify-between rounded-2xl border border-line bg-surface p-4" },
+        React.createElement("div", null,
+          React.createElement("p", { className: "mb-1 text-xs text-mute" }, "이번 주 성과 (월~일)"),
+          React.createElement("p", { className: "text-lg font-bold text-ink" }, weeklyStat.count, "일 완료")
+        ),
+        React.createElement("div", { className: "text-right" },
+          React.createElement("p", { className: "mb-1 text-xs text-mute" }, "총 볼륨"),
+          React.createElement("p", { className: "tnum text-lg font-bold text-volt" }, weeklyStat.volume.toLocaleString(), " kg")
+        )
+      ),
+
+      routineExercises.length === 0 ? React.createElement("div", { className: "mt-12 flex flex-col items-center gap-4 text-center" }, 
+        React.createElement("p", { className: "text-mute" }, isToday ? "오늘 할 운동을 담아 나만의 루틴을 만들어보세요." : "이 날짜에 기록된 루틴이 없습니다."), 
+        React.createElement(
+          "button",
+          {
+            onClick: () => setModal("picker"),
+            className: "rounded-2xl bg-volt px-6 py-3 text-base font-bold text-base active:scale-[0.99]"
+          },
+          "＋ 운동 추가"
+        ), 
+        React.createElement(
+          "button",
+          {
+            onClick: loadLastRoutine,
+            className: "text-sm font-semibold text-mute underline underline-offset-4 active:text-volt"
+          },
+          "지난 운동과 똑같이 불러오기"
+        )
+      ) : React.createElement(React.Fragment, null, routineExercises.map((ex) => React.createElement(
+        ExerciseCard,
+        {
+          key: ex.id,
+          exercise: ex,
+          sets: session[ex.id] || [],
+          onAddSet: addSet,
+          onChangeSet: changeSet,
+          onRemoveSet: removeSet,
+          onRemoveExercise: () => removeExercise(ex.id)
+        }
+      )), React.createElement(
+        "button",
+        {
+          onClick: () => setModal("picker"),
+          className: "w-full rounded-2xl border-2 border-dashed border-line py-4 text-base font-bold text-mute active:scale-[0.99] active:border-volt active:text-volt"
+        },
+        "＋ 운동 추가 / 편집"
+      ))
+    ), 
+    React.createElement("div", { className: "safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-line bg-base/95 p-4 backdrop-blur" }, 
+      React.createElement(
+        "button",
+        {
+          onClick: saveSession,
+          className: "w-full rounded-2xl bg-volt py-4 text-lg font-extrabold text-base active:scale-[0.99]"
+        },
+        isToday ? "오늘 운동 저장" : "이 날짜 기록 덮어쓰기"
+      )
+    ), 
+    toast && React.createElement("div", { className: "fixed inset-x-0 bottom-24 z-50 mx-auto w-fit rounded-full px-5 py-2.5 text-sm font-semibold shadow-lg " + (toast.kind === "danger" ? "bg-danger text-white" : "bg-ok text-base") }, toast.msg), 
+    modal === "picker" && React.createElement(
+      PickerSheet,
+      {
+        allExercises,
+        routine,
+        onToggle: toggleRoutine,
+        onAddCustom: (name, part) => {
+          const id = "u" + uid();
+          setCustomExercises((p) => [...p, { id, name, part, custom: true }]);
+          setRoutine((p) => [...p, id]);
+          showToast("종목을 만들어 루틴에 담았습니다.");
+        },
+        onDeleteCustom: (id) => {
+          setCustomExercises((p) => p.filter((e) => e.id !== id));
+          setRoutine((p) => p.filter((x) => x !== id));
+        },
+        onLoadLast: loadLastRoutine,
+        onClose: () => setModal(null)
+      }
+    ), 
+    modal === "calendar" && React.createElement(
+      CalendarSheet,
+      {
+        history,
+        onDelete: (key) => setHistory((p) => {
+          const c = __spreadValues({}, p);
+          delete c[key];
+          return c;
+        }),
+        onChangeDate: changeSessionDate,
+        onClose: () => setModal(null)
+      }
+    ), 
+    modal === "progress" && React.createElement(ProgressSheet, { history, onClose: () => setModal(null) }), 
+    modal === "backup" && React.createElement(
+      BackupSheet,
+      {
+        buildData: () => ({ version: 2, customExercises, history, session, routine, sessionDate, exportedAt: (new Date()).toISOString() }),
+        applyData: (data) => {
+          setCustomExercises(data.customExercises || []);
+          setHistory(data.history || {});
+          if (data.session) setSession(data.session);
+          if (data.routine) setRoutine(data.routine);
+          if (data.sessionDate) setSessionDate(data.sessionDate);
+        },
+        showToast,
+        onClose: () => setModal(null)
+      }
+    )
+  );
 }
 function PickerSheet({ allExercises, routine, onToggle, onAddCustom, onDeleteCustom, onLoadLast, onClose }) {
   const [parts, setParts] = useState([]);
@@ -527,9 +629,9 @@ function PickerSheet({ allExercises, routine, onToggle, onAddCustom, onDeleteCus
   const [newPart, setNewPart] = useState(PARTS[0]);
   const togglePart = (p) => setParts((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
   const list = parts.length === 0 ? allExercises : allExercises.filter((e) => parts.includes(e.part));
-  return /* @__PURE__ */ React.createElement(Sheet, { title: "운동 담기", onClose }, /* @__PURE__ */ React.createElement("div", { className: "-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1 noscroll" }, PARTS.map((p) => {
+  return React.createElement(Sheet, { title: "운동 담기", onClose }, React.createElement("div", { className: "-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1 noscroll" }, PARTS.map((p) => {
     const on = parts.includes(p);
-    return /* @__PURE__ */ React.createElement(
+    return React.createElement(
       "button",
       {
         key: p,
@@ -538,21 +640,21 @@ function PickerSheet({ allExercises, routine, onToggle, onAddCustom, onDeleteCus
       },
       p
     );
-  })), /* @__PURE__ */ React.createElement("div", { className: "mb-3 flex gap-2" }, /* @__PURE__ */ React.createElement(
+  })), React.createElement("div", { className: "mb-3 flex gap-2" }, React.createElement(
     "button",
     {
       onClick: () => setShowNew((v) => !v),
       className: "flex-1 rounded-xl bg-elevated py-2.5 text-sm font-semibold text-ink active:scale-[0.99]"
     },
     "＋ 새 종목 만들기"
-  ), /* @__PURE__ */ React.createElement(
+  ), React.createElement(
     "button",
     {
       onClick: onLoadLast,
       className: "flex-1 rounded-xl bg-elevated py-2.5 text-sm font-semibold text-ink active:scale-[0.99]"
     },
     "↺ 지난 운동 불러오기"
-  )), showNew && /* @__PURE__ */ React.createElement("div", { className: "mb-4 rounded-2xl bg-base p-3" }, /* @__PURE__ */ React.createElement(
+  )), showNew && React.createElement("div", { className: "mb-4 rounded-2xl bg-base p-3" }, React.createElement(
     "input",
     {
       value: name,
@@ -560,7 +662,7 @@ function PickerSheet({ allExercises, routine, onToggle, onAddCustom, onDeleteCus
       placeholder: "운동 이름 (예: 케이블 크로스오버)",
       className: "w-full rounded-xl bg-surface px-4 py-3 text-ink placeholder-dim outline-none"
     }
-  ), /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex flex-wrap gap-2" }, PARTS.map((p) => /* @__PURE__ */ React.createElement(
+  ), React.createElement("div", { className: "mt-2 flex flex-wrap gap-2" }, PARTS.map((p) => React.createElement(
     "button",
     {
       key: p,
@@ -568,7 +670,7 @@ function PickerSheet({ allExercises, routine, onToggle, onAddCustom, onDeleteCus
       className: "rounded-full px-3 py-1.5 text-sm font-bold " + (newPart === p ? "bg-volt text-base" : "bg-elevated text-mute")
     },
     p
-  ))), /* @__PURE__ */ React.createElement(
+  ))), React.createElement(
     "button",
     {
       onClick: () => {
@@ -581,18 +683,18 @@ function PickerSheet({ allExercises, routine, onToggle, onAddCustom, onDeleteCus
       className: "mt-3 w-full rounded-xl bg-volt py-2.5 font-bold text-base active:scale-[0.99]"
     },
     "만들고 담기"
-  )), /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, list.map((e) => {
+  )), React.createElement("div", { className: "space-y-2" }, list.map((e) => {
     const on = routine.includes(e.id);
-    return /* @__PURE__ */ React.createElement(
+    return React.createElement(
       "div",
       {
         key: e.id,
         className: "flex items-center justify-between rounded-2xl border p-3 transition " + (on ? "border-volt bg-volt/10" : "border-line bg-base")
       },
-      /* @__PURE__ */ React.createElement("button", { onClick: () => onToggle(e.id), className: "flex flex-1 items-center gap-3 text-left" }, /* @__PURE__ */ React.createElement("span", { className: "flex h-7 w-7 items-center justify-center rounded-lg text-sm font-bold " + (on ? "bg-volt text-base" : "bg-elevated text-dim") }, on ? "✓" : "＋"), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("span", { className: "font-semibold text-ink" }, e.name), /* @__PURE__ */ React.createElement("span", { className: "ml-2 text-xs text-dim" }, e.part))),
-      e.custom && /* @__PURE__ */ React.createElement("button", { onClick: () => onDeleteCustom(e.id), className: "ml-2 text-xs text-danger active:scale-90" }, "삭제")
+      React.createElement("button", { onClick: () => onToggle(e.id), className: "flex flex-1 items-center gap-3 text-left" }, React.createElement("span", { className: "flex h-7 w-7 items-center justify-center rounded-lg text-sm font-bold " + (on ? "bg-volt text-base" : "bg-elevated text-dim") }, on ? "✓" : "＋"), React.createElement("span", null, React.createElement("span", { className: "font-semibold text-ink" }, e.name), React.createElement("span", { className: "ml-2 text-xs text-dim" }, e.part))),
+      e.custom && React.createElement("button", { onClick: () => onDeleteCustom(e.id), className: "ml-2 text-xs text-danger active:scale-90" }, "삭제")
     );
-  })), /* @__PURE__ */ React.createElement(
+  })), React.createElement(
     "button",
     {
       onClick: onClose,
@@ -602,24 +704,6 @@ function PickerSheet({ allExercises, routine, onToggle, onAddCustom, onDeleteCus
     routine.length,
     "개 담김)"
   ));
-}
-function HistorySheet({ history, onDelete, onClose }) {
-  const dates = Object.keys(history).sort().reverse();
-  const [open, setOpen] = useState(null);
-  return /* @__PURE__ */ React.createElement(Sheet, { title: "운동 기록", onClose }, dates.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "py-10 text-center text-mute" }, "아직 저장된 기록이 없습니다.") : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, dates.map((key) => {
-    const day = history[key];
-    const totalSets = day.entries.reduce((a, en) => a + en.sets.length, 0);
-    const totalVol = day.entries.reduce((a, en) => a + en.sets.reduce((b, s) => b + (s.weight * s.reps || 0), 0), 0);
-    const isOpen = open === key;
-    return /* @__PURE__ */ React.createElement("div", { key, className: "rounded-2xl bg-base p-4" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between", onClick: () => setOpen(isOpen ? null : key) }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "font-bold text-ink" }, fmtHeader(key)), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-mute tnum" }, day.entries.length, "종목 · ", totalSets, "세트 · ", totalVol.toLocaleString(), "kg")), /* @__PURE__ */ React.createElement("span", { className: "text-mute" }, isOpen ? "▲" : "▼")), isOpen && /* @__PURE__ */ React.createElement("div", { className: "mt-3 space-y-3 border-t border-line pt-3" }, day.entries.map((en) => /* @__PURE__ */ React.createElement("div", { key: en.exerciseId }, /* @__PURE__ */ React.createElement("p", { className: "text-sm font-semibold text-volt" }, en.name), /* @__PURE__ */ React.createElement("div", { className: "mt-1 space-y-0.5" }, en.sets.map((s, i) => /* @__PURE__ */ React.createElement("p", { key: s.id, className: "text-sm text-mute tnum" }, i + 1, "세트 · ", s.weight, "kg × ", s.reps, "회", s.memo ? /* @__PURE__ */ React.createElement("span", { className: "text-dim" }, " — ", s.memo) : null))))), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => onDelete(key),
-        className: "mt-2 w-full rounded-xl bg-elevated py-2 text-sm text-danger active:scale-[0.99]"
-      },
-      "이 날 기록 삭제"
-    )));
-  })));
 }
 function BackupSheet({ buildData, applyData, showToast, onClose }) {
   const fileRef = useRef(null);
@@ -673,7 +757,7 @@ function BackupSheet({ buildData, applyData, showToast, onClose }) {
       setBusy("");
     }
   };
-  return /* @__PURE__ */ React.createElement(Sheet, { title: "백업 · 복원", onClose }, /* @__PURE__ */ React.createElement("p", { className: "mb-2 text-sm text-mute" }, "파일로 저장"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-2" }, /* @__PURE__ */ React.createElement("button", { onClick: exportJson, className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99]" }, "📤 파일 내보내기"), /* @__PURE__ */ React.createElement("button", { onClick: () => fileRef.current.click(), className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99]" }, "📥 파일 불러오기"), /* @__PURE__ */ React.createElement("input", { ref: fileRef, type: "file", accept: "application/json,.json", onChange: importJson, className: "hidden" })), /* @__PURE__ */ React.createElement("p", { className: "mb-2 mt-6 text-sm text-mute" }, "구글 드라이브"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-2" }, /* @__PURE__ */ React.createElement(
+  return React.createElement(Sheet, { title: "백업 · 복원", onClose }, React.createElement("p", { className: "mb-2 text-sm text-mute" }, "파일로 저장"), React.createElement("div", { className: "grid grid-cols-2 gap-2" }, React.createElement("button", { onClick: exportJson, className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99]" }, "📤 파일 내보내기"), React.createElement("button", { onClick: () => fileRef.current.click(), className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99]" }, "📥 파일 불러오기"), React.createElement("input", { ref: fileRef, type: "file", accept: "application/json,.json", onChange: importJson, className: "hidden" })), React.createElement("p", { className: "mb-2 mt-6 text-sm text-mute" }, "구글 드라이브"), React.createElement("div", { className: "grid grid-cols-2 gap-2" }, React.createElement(
     "button",
     {
       onClick: gdUpload,
@@ -681,7 +765,7 @@ function BackupSheet({ buildData, applyData, showToast, onClose }) {
       className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99] disabled:opacity-50"
     },
     busy === "up" ? "업로드 중…" : "☁️ 드라이브 백업"
-  ), /* @__PURE__ */ React.createElement(
+  ), React.createElement(
     "button",
     {
       onClick: gdDownload,
@@ -689,7 +773,7 @@ function BackupSheet({ buildData, applyData, showToast, onClose }) {
       className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99] disabled:opacity-50"
     },
     busy === "down" ? "불러오는 중…" : "⬇️ 드라이브 복원"
-  )), !GOOGLE_CLIENT_ID && /* @__PURE__ */ React.createElement("p", { className: "mt-3 rounded-xl bg-base p-3 text-xs leading-relaxed text-dim" }, "구글 드라이브를 쓰려면 코드 상단의 ", /* @__PURE__ */ React.createElement("b", { className: "text-mute" }, "GOOGLE_CLIENT_ID"), "를 본인 값으로 설정하고, 앱을 https 주소에 올린 뒤(예: GitHub Pages) 그 주소를 OAuth 승인 원본에 등록하세요. 파일 내보내기/불러오기는 지금도 바로 됩니다."));
+  )), !GOOGLE_CLIENT_ID && React.createElement("p", { className: "mt-3 rounded-xl bg-base p-3 text-xs leading-relaxed text-dim" }, "구글 드라이브를 쓰려면 코드 상단의 ", React.createElement("b", { className: "text-mute" }, "GOOGLE_CLIENT_ID"), "를 본인 값으로 설정하고, 앱을 https 주소에 올린 뒤(예: GitHub Pages) 그 주소를 OAuth 승인 원본에 등록하세요. 파일 내보내기/불러오기는 지금도 바로 됩니다."));
 }
 function LineChart({ points }) {
   const W = 320, H = 180, padL = 38, padR = 14, padT = 16, padB = 26;
@@ -706,7 +790,7 @@ function LineChart({ points }) {
   const line = points.map((p, i) => `${X(i)},${Y(p.value)}`).join(" ");
   const area = `${X(0)},${padT + innerH} ${line} ${X(points.length - 1)},${padT + innerH}`;
   const grid = [max, (max + min) / 2, min];
-  return /* @__PURE__ */ React.createElement("svg", { viewBox: `0 0 ${W} ${H}`, className: "w-full" }, grid.map((v, i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("line", { x1: padL, y1: Y(v), x2: W - padR, y2: Y(v), stroke: "#2a2f39", strokeWidth: "1" }), /* @__PURE__ */ React.createElement("text", { x: padL - 6, y: Y(v) + 4, textAnchor: "end", fontSize: "10", fill: "#697180" }, Math.round(v)))), /* @__PURE__ */ React.createElement("polygon", { points: area, fill: "#f5b30122" }), /* @__PURE__ */ React.createElement("polyline", { points: line, fill: "none", stroke: "#f5b301", strokeWidth: "2.5", strokeLinejoin: "round", strokeLinecap: "round" }), points.map((p, i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: X(i), cy: Y(p.value), r: i === points.length - 1 ? 4.5 : 3, fill: "#f5b301" })), /* @__PURE__ */ React.createElement("text", { x: X(0), y: H - 8, textAnchor: "start", fontSize: "10", fill: "#697180" }, points[0].label), points.length > 1 && /* @__PURE__ */ React.createElement("text", { x: X(points.length - 1), y: H - 8, textAnchor: "end", fontSize: "10", fill: "#697180" }, points[points.length - 1].label));
+  return React.createElement("svg", { viewBox: `0 0 ${W} ${H}`, className: "w-full" }, grid.map((v, i) => React.createElement("g", { key: i }, React.createElement("line", { x1: padL, y1: Y(v), x2: W - padR, y2: Y(v), stroke: "#2a2f39", strokeWidth: "1" }), React.createElement("text", { x: padL - 6, y: Y(v) + 4, textAnchor: "end", fontSize: "10", fill: "#697180" }, Math.round(v)))), React.createElement("polygon", { points: area, fill: "#f5b30122" }), React.createElement("polyline", { points: line, fill: "none", stroke: "#f5b301", strokeWidth: "2.5", strokeLinejoin: "round", strokeLinecap: "round" }), points.map((p, i) => React.createElement("circle", { key: i, cx: X(i), cy: Y(p.value), r: i === points.length - 1 ? 4.5 : 3, fill: "#f5b301" })), React.createElement("text", { x: X(0), y: H - 8, textAnchor: "start", fontSize: "10", fill: "#697180" }, points[0].label), points.length > 1 && React.createElement("text", { x: X(points.length - 1), y: H - 8, textAnchor: "end", fontSize: "10", fill: "#697180" }, points[points.length - 1].label));
 }
 function ProgressSheet({ history, onClose }) {
   const exOptions = useMemo(() => {
@@ -741,15 +825,15 @@ function ProgressSheet({ history, onClose }) {
   const last = points.length ? points[points.length - 1].value : null;
   const delta = first != null ? last - first : 0;
   const deltaText = delta === 0 ? "±0" : delta > 0 ? "▲ +" + delta : "▼ " + delta;
-  return /* @__PURE__ */ React.createElement(Sheet, { title: "성장 그래프", onClose }, exOptions.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "py-10 text-center text-mute" }, "운동을 저장하면 여기서 무게 변화를 볼 수 있어요.") : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+  return React.createElement(Sheet, { title: "성장 그래프", onClose }, exOptions.length === 0 ? React.createElement("p", { className: "py-10 text-center text-mute" }, "운동을 저장하면 여기서 무게 변화를 볼 수 있어요.") : React.createElement(React.Fragment, null, React.createElement(
     "select",
     {
       value: selId,
       onChange: (e) => setSelId(e.target.value),
       className: "w-full rounded-xl bg-base px-4 py-3 text-ink outline-none"
     },
-    exOptions.map((o) => /* @__PURE__ */ React.createElement("option", { key: o.id, value: o.id }, o.name))
-  ), /* @__PURE__ */ React.createElement("div", { className: "mt-3 flex gap-2" }, [["weight", "최고 중량"], ["volume", "총 볼륨"]].map(([k, l]) => /* @__PURE__ */ React.createElement(
+    exOptions.map((o) => React.createElement("option", { key: o.id, value: o.id }, o.name))
+  ), React.createElement("div", { className: "mt-3 flex gap-2" }, [["weight", "최고 중량"], ["volume", "총 볼륨"]].map(([k, l]) => React.createElement(
     "button",
     {
       key: k,
@@ -757,10 +841,10 @@ function ProgressSheet({ history, onClose }) {
       className: "flex-1 rounded-xl py-2 text-sm font-bold " + (metric === k ? "bg-volt text-base" : "bg-elevated text-mute")
     },
     l
-  ))), points.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "py-8 text-center text-mute" }, "이 운동의 기록이 없습니다.") : /* @__PURE__ */ React.createElement("div", { className: "mt-4 rounded-2xl bg-base p-4" }, /* @__PURE__ */ React.createElement("div", { className: "mb-2 flex items-end justify-between" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-dim" }, "현재"), /* @__PURE__ */ React.createElement("p", { className: "text-2xl font-extrabold text-ink tnum" }, last, /* @__PURE__ */ React.createElement("span", { className: "text-sm text-dim" }, " kg"))), /* @__PURE__ */ React.createElement("div", { className: "text-right" }, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-dim" }, "처음 기록 대비"), /* @__PURE__ */ React.createElement("p", { className: "text-lg font-bold tnum " + (delta > 0 ? "text-ok" : delta < 0 ? "text-danger" : "text-mute") }, deltaText, " kg"))), /* @__PURE__ */ React.createElement(LineChart, { points }), points.length < 2 && /* @__PURE__ */ React.createElement("p", { className: "mt-2 text-center text-xs text-dim" }, "2회 이상 기록하면 추세선이 그려져요."))));
+  ))), points.length === 0 ? React.createElement("p", { className: "py-8 text-center text-mute" }, "이 운동의 기록이 없습니다.") : React.createElement("div", { className: "mt-4 rounded-2xl bg-base p-4" }, React.createElement("div", { className: "mb-2 flex items-end justify-between" }, React.createElement("div", null, React.createElement("p", { className: "text-xs text-dim" }, "현재"), React.createElement("p", { className: "text-2xl font-extrabold text-ink tnum" }, last, React.createElement("span", { className: "text-sm text-dim" }, " kg"))), React.createElement("div", { className: "text-right" }, React.createElement("p", { className: "text-xs text-dim" }, "처음 기록 대비"), React.createElement("p", { className: "text-lg font-bold tnum " + (delta > 0 ? "text-ok" : delta < 0 ? "text-danger" : "text-mute") }, deltaText, " kg"))), React.createElement(LineChart, { points }), points.length < 2 && React.createElement("p", { className: "mt-2 text-center text-xs text-dim" }, "2회 이상 기록하면 추세선이 그려져요."))));
 }
-function CalendarSheet({ history, onDelete, onClose }) {
-  const now = /* @__PURE__ */ new Date();
+function CalendarSheet({ history, onDelete, onChangeDate, onClose }) {
+  const now = new Date();
   const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [selDay, setSelDay] = useState(null);
   const cell = (d) => `${ym.y}-${pad(ym.m + 1)}-${pad(d)}`;
@@ -781,13 +865,13 @@ function CalendarSheet({ history, onDelete, onClose }) {
     setYm((s) => s.m === 11 ? { y: s.y + 1, m: 0 } : { y: s.y, m: s.m + 1 });
   };
   const day = selDay ? history[selDay] : null;
-  return /* @__PURE__ */ React.createElement(Sheet, { title: "운동 달력", onClose }, /* @__PURE__ */ React.createElement("div", { className: "mb-3 flex items-center justify-between" }, /* @__PURE__ */ React.createElement("button", { onClick: prev, className: "h-9 w-9 rounded-lg bg-elevated text-lg text-mute active:scale-90" }, "‹"), /* @__PURE__ */ React.createElement("p", { className: "font-bold text-ink" }, ym.y, "년 ", ym.m + 1, "월"), /* @__PURE__ */ React.createElement("button", { onClick: next, className: "h-9 w-9 rounded-lg bg-elevated text-lg text-mute active:scale-90" }, "›")), /* @__PURE__ */ React.createElement("p", { className: "mb-2 text-center text-xs text-mute" }, "이번 달 ", /* @__PURE__ */ React.createElement("b", { className: "text-volt" }, countThisMonth), "일 운동"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-7 gap-1 text-center" }, ["일", "월", "화", "수", "목", "금", "토"].map((w) => /* @__PURE__ */ React.createElement("div", { key: w, className: "py-1 text-xs text-dim" }, w)), cells.map((d, i) => {
-    if (d === null) return /* @__PURE__ */ React.createElement("div", { key: i });
+  return React.createElement(Sheet, { title: "운동 달력", onClose }, React.createElement("div", { className: "mb-3 flex items-center justify-between" }, React.createElement("button", { onClick: prev, className: "h-9 w-9 rounded-lg bg-elevated text-lg text-mute active:scale-90" }, "‹"), React.createElement("p", { className: "font-bold text-ink" }, ym.y, "년 ", ym.m + 1, "월"), React.createElement("button", { onClick: next, className: "h-9 w-9 rounded-lg bg-elevated text-lg text-mute active:scale-90" }, "›")), React.createElement("p", { className: "mb-2 text-center text-xs text-mute" }, "이번 달 ", React.createElement("b", { className: "text-volt" }, countThisMonth), "일 운동"), React.createElement("div", { className: "grid grid-cols-7 gap-1 text-center" }, ["일", "월", "화", "수", "목", "금", "토"].map((w) => React.createElement("div", { key: w, className: "py-1 text-xs text-dim" }, w)), cells.map((d, i) => {
+    if (d === null) return React.createElement("div", { key: i });
     const key = cell(d);
     const has = !!history[key];
     const isToday = key === tKey;
     const isSel = key === selDay;
-    return /* @__PURE__ */ React.createElement(
+    return React.createElement(
       "button",
       {
         key: i,
@@ -795,21 +879,37 @@ function CalendarSheet({ history, onDelete, onClose }) {
         className: "relative flex aspect-square items-center justify-center rounded-lg text-sm " + (isSel ? "bg-volt text-base font-bold" : has ? "bg-volt/15 text-ink font-bold" : "text-mute") + (isToday && !isSel ? " ring-1 ring-volt" : "")
       },
       d,
-      has && !isSel && /* @__PURE__ */ React.createElement("span", { className: "absolute bottom-1 h-1 w-1 rounded-full bg-volt" })
+      has && !isSel && React.createElement("span", { className: "absolute bottom-1 h-1 w-1 rounded-full bg-volt" })
     );
-  })), day && /* @__PURE__ */ React.createElement("div", { className: "mt-4 rounded-2xl bg-base p-4" }, /* @__PURE__ */ React.createElement("p", { className: "mb-2 font-bold text-ink" }, fmtHeader(selDay)), /* @__PURE__ */ React.createElement("div", { className: "space-y-3" }, day.entries.map((en) => /* @__PURE__ */ React.createElement("div", { key: en.exerciseId }, /* @__PURE__ */ React.createElement("p", { className: "text-sm font-semibold text-volt" }, en.name), /* @__PURE__ */ React.createElement("div", { className: "mt-1 space-y-0.5" }, en.sets.map((s, i) => /* @__PURE__ */ React.createElement("p", { key: s.id, className: "text-sm text-mute tnum" }, i + 1, "세트 · ", s.weight, "kg × ", s.reps, "회", s.memo ? /* @__PURE__ */ React.createElement("span", { className: "text-dim" }, " — ", s.memo) : null)))))), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => {
-        onDelete(selDay);
-        setSelDay(null);
+  })), day && React.createElement("div", { className: "mt-4 rounded-2xl bg-base p-4" }, React.createElement("p", { className: "mb-2 font-bold text-ink" }, fmtHeader(selDay)), React.createElement("div", { className: "space-y-3" }, day.entries.map((en) => React.createElement("div", { key: en.exerciseId }, React.createElement("p", { className: "text-sm font-semibold text-volt" }, en.name), React.createElement("div", { className: "mt-1 space-y-0.5" }, en.sets.map((s, i) => React.createElement("p", { key: s.id, className: "text-sm text-mute tnum" }, i + 1, "세트 · ", s.weight, "kg × ", s.reps, "회", s.memo ? React.createElement("span", { className: "text-dim" }, " — ", s.memo) : null)))))), React.createElement(
+    "div", { className: "mt-3 flex gap-2" },
+    React.createElement(
+      "button",
+      {
+        onClick: () => {
+          onChangeDate(selDay);
+          onClose();
+        },
+        className: "flex-1 rounded-xl bg-volt py-2.5 text-sm font-bold text-base active:scale-[0.99]"
       },
-      className: "mt-3 w-full rounded-xl bg-elevated py-2 text-sm text-danger active:scale-[0.99]"
-    },
-    "이 날 기록 삭제"
+      "이 날짜 수정하기"
+    ),
+    React.createElement(
+      "button",
+      {
+        onClick: () => {
+          if(window.confirm("이 날짜의 기록을 전부 삭제하시겠습니까?")) {
+            onDelete(selDay);
+            setSelDay(null);
+          }
+        },
+        className: "flex-1 rounded-xl bg-elevated py-2.5 text-sm font-bold text-danger active:scale-[0.99]"
+      },
+      "기록 삭제"
+    )
   )));
 }
-ReactDOM.createRoot(document.getElementById("root")).render(/* @__PURE__ */ React.createElement(App, null));
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App, null));
 
   </script>
 </body>
