@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="운동기록" />
+  <meta name="theme-color" content="#0e1013" />
+  <title>운동 기록</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: {
+        base:'#0e1013', surface:'#171a20', elevated:'#20242c', line:'#2a2f39',
+        ink:'#f3f5f8', mute:'#9aa3b2', dim:'#697180',
+        volt:'#f5b301', danger:'#ff5a52', ok:'#39d98a'
+      } } }
+    };
+  </script>
+
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js" onerror="window.__loadFail=1"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" onerror="window.__loadFail=1"></script>
+
+  <style>
+    html, body, #root { height: 100%; }
+    body {
+      background: #0e1013; color: #f3f5f8;
+      -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    }
+    .tnum { font-variant-numeric: tabular-nums; }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type="number"] { -moz-appearance: textfield; }
+    .safe-top { padding-top: env(safe-area-inset-top); }
+    .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+    .noscroll::-webkit-scrollbar { display: none; }
+    .noscroll { scrollbar-width: none; }
+  </style>
+</head>
+<body>
+  <div id="root"><p style="padding:24px;color:#9aa3b2;font-family:sans-serif">로딩 중… (인터넷 연결이 필요합니다)</p></div>
+  <script>
+window.addEventListener("error", function(e){
+  var r=document.getElementById("root");
+  if(r) r.innerHTML = '<div style="padding:24px;color:#ff5a52;font-family:sans-serif;line-height:1.6">앱 로딩 중 오류가 발생했습니다.<br>인터넷 연결을 확인하거나, 파일을 https 주소(예: GitHub Pages)에 올려 열어보세요.<br><br><span style="color:#697180;font-size:12px">오류: '+ (e.message||"") +'</span></div>';
+});
+if(window.__loadFail){ throw new Error("React 라이브러리를 불러오지 못했습니다 (오프라인?)"); }
+var __defProp = Object.defineProperty;
+var __defProps = Object.defineProperties;
+var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
+const { useState, useEffect, useMemo, useRef } = React;
+const GOOGLE_CLIENT_ID = "";
+const DRIVE_FILENAME = "gymlog-backup.json";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const STORAGE_KEY = "gymlog_v1";
+const PARTS = ["등", "가슴", "어깨", "이두/삼두", "하체"];
+const DEFAULT_EXERCISES = [
+  { id: "d1", name: "렛풀다운", part: "등" },
+  { id: "d2", name: "시티드 로우", part: "등" },
+  { id: "d3", name: "바벨 로우", part: "등" },
+  { id: "d4", name: "풀업", part: "등" },
+  { id: "d5", name: "데드리프트", part: "등" },
+  { id: "c1", name: "벤치프레스", part: "가슴" },
+  { id: "c2", name: "인클라인 벤치프레스", part: "가슴" },
+  { id: "c3", name: "체스트 프레스", part: "가슴" },
+  { id: "c4", name: "덤벨 플라이", part: "가슴" },
+  { id: "c5", name: "딥스", part: "가슴" },
+  { id: "s1", name: "밀리터리 프레스", part: "어깨" },
+  { id: "s2", name: "사이드 레터럴 레이즈", part: "어깨" },
+  { id: "s3", name: "프론트 레이즈", part: "어깨" },
+  { id: "s4", name: "리어 델트 플라이", part: "어깨" },
+  { id: "s5", name: "업라이트 로우", part: "어깨" },
+  { id: "a1", name: "바벨 컬", part: "이두/삼두" },
+  { id: "a2", name: "덤벨 컬", part: "이두/삼두" },
+  { id: "a3", name: "해머 컬", part: "이두/삼두" },
+  { id: "a4", name: "트라이셉스 익스텐션", part: "이두/삼두" },
+  { id: "a5", name: "케이블 푸시다운", part: "이두/삼두" },
+  { id: "l1", name: "스쿼트", part: "하체" },
+  { id: "l2", name: "레그 프레스", part: "하체" },
+  { id: "l3", name: "레그 익스텐션", part: "하체" },
+  { id: "l4", name: "레그 컬", part: "하체" },
+  { id: "l5", name: "런지", part: "하체" }
+];
+const uid = () => Math.random().toString(36).slice(2, 10);
+const pad = (n) => String(n).padStart(2, "0");
+const todayKey = () => {
+  const d = /* @__PURE__ */ new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
+const WEEK = ["일", "월", "화", "수", "목", "금", "토"];
+const fmtHeader = (key) => {
+  const [y, m, d] = key.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return `${y}년 ${m}월 ${d}일 (${WEEK[dt.getDay()]})`;
+};
+const fmtShort = (key) => {
+  const [y, m, d] = key.split("-").map(Number);
+  const dt = new Date(y, m - 1, d);
+  return `${m}/${d} (${WEEK[dt.getDay()]})`;
+};
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+function saveStore(obj) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  } catch (e) {
+  }
+}
+let _gsiLoaded = null;
+function loadGsi() {
+  if (_gsiLoaded) return _gsiLoaded;
+  _gsiLoaded = new Promise((resolve, reject) => {
+    if (window.google && window.google.accounts) return resolve();
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.defer = true;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error("구글 라이브러리를 불러오지 못했습니다."));
+    document.head.appendChild(s);
+  });
+  return _gsiLoaded;
+}
+let _accessToken = null;
+async function getAccessToken() {
+  if (!GOOGLE_CLIENT_ID) throw new Error("코드 상단의 GOOGLE_CLIENT_ID를 먼저 설정하세요.");
+  await loadGsi();
+  return new Promise((resolve, reject) => {
+    const client = window.google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: DRIVE_SCOPE,
+      callback: (resp) => {
+        if (resp && resp.access_token) {
+          _accessToken = resp.access_token;
+          resolve(resp.access_token);
+        } else reject(new Error("구글 인증에 실패했습니다."));
+      }
+    });
+    client.requestAccessToken({ prompt: _accessToken ? "" : "consent" });
+  });
+}
+async function driveFindFileId(token) {
+  const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) throw new Error("드라이브 조회 실패");
+  const data = await res.json();
+  return data.files && data.files.length ? data.files[0].id : null;
+}
+async function driveUpload(jsonString) {
+  const token = await getAccessToken();
+  const existingId = await driveFindFileId(token);
+  if (existingId) {
+    const res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingId}?uploadType=media`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: jsonString
+    });
+    if (!res.ok) throw new Error("드라이브 업로드(수정) 실패");
+  } else {
+    const boundary = "gymlog" + uid();
+    const metadata = { name: DRIVE_FILENAME, mimeType: "application/json" };
+    const body = `--${boundary}\r
+Content-Type: application/json; charset=UTF-8\r
+\r
+${JSON.stringify(metadata)}\r
+--${boundary}\r
+Content-Type: application/json\r
+\r
+${jsonString}\r
+--${boundary}--`;
+    const res = await fetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": `multipart/related; boundary=${boundary}` },
+      body
+    });
+    if (!res.ok) throw new Error("드라이브 업로드(생성) 실패");
+  }
+}
+async function driveDownload() {
+  const token = await getAccessToken();
+  const id = await driveFindFileId(token);
+  if (!id) throw new Error("드라이브에 백업 파일이 없습니다.");
+  const res = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${id}?alt=media`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!res.ok) throw new Error("드라이브 다운로드 실패");
+  return await res.json();
+}
+function IconBtn({ children, onClick, label }) {
+  return /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick,
+      "aria-label": label,
+      className: "flex h-11 w-11 items-center justify-center rounded-xl bg-elevated text-lg active:scale-90"
+    },
+    children
+  );
+}
+function Stepper({ value, onChange, step, min = 0, unit }) {
+  const set = (v) => onChange(Math.max(min, Math.round(v * 100) / 100));
+  return /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => set(value - step),
+      className: "h-12 w-12 shrink-0 rounded-xl bg-elevated text-2xl font-bold text-ink active:scale-90 transition-transform",
+      "aria-label": "감소"
+    },
+    "−"
+  ), /* @__PURE__ */ React.createElement("div", { className: "flex min-w-[92px] items-baseline justify-center rounded-xl bg-base px-2 py-1" }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      inputMode: "decimal",
+      value,
+      onChange: (e) => set(e.target.value === "" ? min : parseFloat(e.target.value)),
+      onFocus: (e) => e.target.select(),
+      className: "w-14 bg-transparent text-center text-2xl font-bold text-ink outline-none tnum"
+    }
+  ), /* @__PURE__ */ React.createElement("span", { className: "text-sm text-dim" }, unit)), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => set(value + step),
+      className: "h-12 w-12 shrink-0 rounded-xl bg-volt text-2xl font-bold text-base active:scale-90 transition-transform",
+      "aria-label": "증가"
+    },
+    "＋"
+  ));
+}
+function SetRow({ index, set, onChange, onRemove }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "rounded-2xl bg-surface p-3" }, /* @__PURE__ */ React.createElement("div", { className: "mb-2 flex items-center justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "rounded-lg bg-elevated px-2.5 py-1 text-sm font-bold text-volt" }, index + 1, "세트"), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onRemove,
+      className: "flex h-9 w-9 items-center justify-center rounded-lg text-danger active:scale-90",
+      "aria-label": "세트 삭제"
+    },
+    "✕"
+  )), /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-2 py-1" }, /* @__PURE__ */ React.createElement("span", { className: "w-9 text-sm text-mute" }, "무게"), /* @__PURE__ */ React.createElement(Stepper, { value: set.weight, onChange: (v) => onChange(__spreadProps(__spreadValues({}, set), { weight: v })), step: 2.5, unit: "kg" })), /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-2 py-1" }, /* @__PURE__ */ React.createElement("span", { className: "w-9 text-sm text-mute" }, "횟수"), /* @__PURE__ */ React.createElement(Stepper, { value: set.reps, onChange: (v) => onChange(__spreadProps(__spreadValues({}, set), { reps: v })), step: 1, unit: "회" })), /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex items-center gap-2" }, /* @__PURE__ */ React.createElement("span", { className: "text-mute" }, "📝"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      value: set.memo,
+      onChange: (e) => onChange(__spreadProps(__spreadValues({}, set), { memo: e.target.value })),
+      placeholder: "메모 (예: 반동 씀 / 마지막 세트 힘듦)",
+      className: "w-full rounded-lg bg-base px-3 py-2 text-sm text-ink placeholder-dim outline-none"
+    }
+  )));
+}
+function ExerciseCard({ exercise, sets, onAddSet, onChangeSet, onRemoveSet, onRemoveExercise }) {
+  const volume = sets.reduce((a, s) => a + (s.weight * s.reps || 0), 0);
+  return /* @__PURE__ */ React.createElement("div", { className: "rounded-3xl border border-line bg-elevated/40 p-4" }, /* @__PURE__ */ React.createElement("div", { className: "mb-2 flex items-center justify-between" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2" }, /* @__PURE__ */ React.createElement("h3", { className: "text-lg font-bold text-ink" }, exercise.name), /* @__PURE__ */ React.createElement("span", { className: "rounded-full bg-elevated px-2.5 py-0.5 text-xs text-mute" }, exercise.part)), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onRemoveExercise,
+      className: "flex h-9 w-9 items-center justify-center rounded-lg bg-elevated text-mute active:scale-90",
+      "aria-label": "루틴에서 빼기"
+    },
+    "✕"
+  )), sets.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "mb-1 flex items-center justify-between text-xs text-dim" }, /* @__PURE__ */ React.createElement("span", null, sets.length, "세트"), /* @__PURE__ */ React.createElement("span", { className: "tnum" }, "볼륨 ", volume.toLocaleString(), " kg")), /* @__PURE__ */ React.createElement("div", { className: "flex flex-col gap-2" }, sets.map((s, i) => /* @__PURE__ */ React.createElement(
+    SetRow,
+    {
+      key: s.id,
+      index: i,
+      set: s,
+      onChange: (ns) => onChangeSet(exercise.id, s.id, ns),
+      onRemove: () => onRemoveSet(exercise.id, s.id)
+    }
+  ))), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onAddSet(exercise.id),
+      className: "mt-3 w-full rounded-2xl border-2 border-dashed border-line py-3 text-base font-semibold text-mute active:scale-[0.99] active:border-volt active:text-volt"
+    },
+    "＋ 세트 추가"
+  ));
+}
+function Sheet({ title, onClose, children }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex flex-col justify-end bg-black/60", onClick: onClose }, /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      className: "max-h-[88vh] overflow-y-auto rounded-t-3xl border-t border-line bg-surface p-5 safe-bottom noscroll",
+      onClick: (e) => e.stopPropagation()
+    },
+    /* @__PURE__ */ React.createElement("div", { className: "mb-4 flex items-center justify-between" }, /* @__PURE__ */ React.createElement("h2", { className: "text-xl font-bold text-ink" }, title), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "h-9 w-9 rounded-lg bg-elevated text-mute active:scale-90" }, "✕")),
+    children
+  ));
+}
+function App() {
+  const [customExercises, setCustomExercises] = useState([]);
+  const [history, setHistory] = useState({});
+  const [session, setSession] = useState({});
+  const [routine, setRoutine] = useState([]);
+  const [sessionDate, setSessionDate] = useState(todayKey());
+  const [modal, setModal] = useState(null);
+  const [toast, setToast] = useState(null);
+  const loaded = useRef(false);
+  useEffect(() => {
+    const s = loadStore();
+    if (s) {
+      setCustomExercises(s.customExercises || []);
+      setHistory(s.history || {});
+      if (s.sessionDate === todayKey()) {
+        setSession(s.session || {});
+        setRoutine(s.routine || Object.keys(s.session || {}));
+        setSessionDate(s.sessionDate);
+      }
+    }
+    loaded.current = true;
+  }, []);
+  useEffect(() => {
+    if (!loaded.current) return;
+    saveStore({ version: 2, customExercises, history, session, routine, sessionDate });
+  }, [customExercises, history, session, routine, sessionDate]);
+  const showToast = (msg, kind = "ok") => {
+    setToast({ msg, kind });
+    setTimeout(() => setToast(null), 2200);
+  };
+  const allExercises = useMemo(() => [...DEFAULT_EXERCISES, ...customExercises], [customExercises]);
+  const byId = useMemo(() => {
+    const m = {};
+    allExercises.forEach((e) => m[e.id] = e);
+    return m;
+  }, [allExercises]);
+  const routineExercises = useMemo(
+    () => routine.map((id) => byId[id]).filter(Boolean),
+    [routine, byId]
+  );
+  const prefillFor = (exId) => {
+    const cur = session[exId];
+    if (cur && cur.length) {
+      const l = cur[cur.length - 1];
+      return { weight: l.weight, reps: l.reps };
+    }
+    const dates = Object.keys(history).sort().reverse();
+    for (const d of dates) {
+      const entry = (history[d].entries || []).find((en) => en.exerciseId === exId);
+      if (entry && entry.sets.length) {
+        const l = entry.sets[entry.sets.length - 1];
+        return { weight: l.weight, reps: l.reps };
+      }
+    }
+    return { weight: 20, reps: 10 };
+  };
+  const addSet = (exId) => {
+    const { weight, reps } = prefillFor(exId);
+    setSession((p) => __spreadProps(__spreadValues({}, p), { [exId]: [...p[exId] || [], { id: uid(), weight, reps, memo: "" }] }));
+  };
+  const changeSet = (exId, setId, ns) => setSession((p) => __spreadProps(__spreadValues({}, p), { [exId]: p[exId].map((s) => s.id === setId ? ns : s) }));
+  const removeSet = (exId, setId) => setSession((p) => {
+    const next = p[exId].filter((s) => s.id !== setId);
+    const c = __spreadValues({}, p);
+    if (next.length) c[exId] = next;
+    else delete c[exId];
+    return c;
+  });
+  const toggleRoutine = (exId) => setRoutine((p) => p.includes(exId) ? p.filter((x) => x !== exId) : [...p, exId]);
+  const removeExercise = (exId) => {
+    const sets = session[exId];
+    if (sets && sets.length && !window.confirm("기록한 세트가 있습니다. 이 운동을 빼시겠어요?")) return;
+    setRoutine((p) => p.filter((x) => x !== exId));
+    setSession((p) => {
+      const c = __spreadValues({}, p);
+      delete c[exId];
+      return c;
+    });
+  };
+  const loadLastRoutine = () => {
+    const dates = Object.keys(history).sort().reverse();
+    if (!dates.length) {
+      showToast("불러올 지난 기록이 없습니다.", "danger");
+      return;
+    }
+    const last = history[dates[0]];
+    const ids = last.entries.map((en) => en.exerciseId).filter((id) => byId[id]);
+    if (!ids.length) {
+      showToast("불러올 종목이 없습니다.", "danger");
+      return;
+    }
+    setRoutine(ids);
+    showToast(`${fmtShort(dates[0])} 루틴을 불러왔습니다.`);
+  };
+  const saveToday = () => {
+    const entries = routine.filter((exId) => session[exId] && session[exId].length).map((exId) => {
+      const ex = byId[exId] || { name: "(삭제된 종목)", part: "" };
+      return { exerciseId: exId, name: ex.name, part: ex.part, sets: session[exId] };
+    });
+    if (entries.length === 0) {
+      showToast("기록된 세트가 없습니다.", "danger");
+      return;
+    }
+    const key = todayKey();
+    setHistory((p) => __spreadProps(__spreadValues({}, p), { [key]: { savedAt: (/* @__PURE__ */ new Date()).toISOString(), entries } }));
+    setSessionDate(key);
+    showToast("오늘 운동이 저장되었습니다.");
+  };
+  const stat = useMemo(() => {
+    let setCount = 0, volume = 0, exCount = 0;
+    routine.forEach((id) => {
+      const arr = session[id] || [];
+      if (arr.length) exCount += 1;
+      arr.forEach((s) => {
+        setCount += 1;
+        volume += s.weight * s.reps || 0;
+      });
+    });
+    return { setCount, volume, exCount };
+  }, [session, routine]);
+  return /* @__PURE__ */ React.createElement("div", { className: "mx-auto flex min-h-full max-w-md flex-col" }, /* @__PURE__ */ React.createElement("header", { className: "safe-top sticky top-0 z-30 border-b border-line bg-base/90 px-5 pb-3 pt-4 backdrop-blur" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-start justify-between" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-xs font-semibold tracking-widest text-volt" }, "오늘의 운동"), /* @__PURE__ */ React.createElement("h1", { className: "mt-0.5 text-2xl font-extrabold text-ink" }, fmtHeader(todayKey()))), /* @__PURE__ */ React.createElement("div", { className: "flex gap-2" }, /* @__PURE__ */ React.createElement(IconBtn, { onClick: () => setModal("progress"), label: "그래프" }, "📈"), /* @__PURE__ */ React.createElement(IconBtn, { onClick: () => setModal("calendar"), label: "달력" }, "📅"), /* @__PURE__ */ React.createElement(IconBtn, { onClick: () => setModal("backup"), label: "백업" }, "☁️"))), /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex gap-4 text-xs text-mute tnum" }, /* @__PURE__ */ React.createElement("span", null, "종목 ", /* @__PURE__ */ React.createElement("b", { className: "text-ink" }, stat.exCount)), /* @__PURE__ */ React.createElement("span", null, "세트 ", /* @__PURE__ */ React.createElement("b", { className: "text-ink" }, stat.setCount)), /* @__PURE__ */ React.createElement("span", null, "볼륨 ", /* @__PURE__ */ React.createElement("b", { className: "text-ink" }, stat.volume.toLocaleString()), " kg"))), /* @__PURE__ */ React.createElement("main", { className: "flex-1 space-y-3 px-4 py-4 pb-40" }, routineExercises.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "mt-16 flex flex-col items-center gap-4 text-center" }, /* @__PURE__ */ React.createElement("p", { className: "text-mute" }, "오늘 할 운동을 담아 나만의 루틴을 만들어보세요."), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setModal("picker"),
+      className: "rounded-2xl bg-volt px-6 py-3 text-base font-bold text-base active:scale-[0.99]"
+    },
+    "＋ 운동 추가"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: loadLastRoutine,
+      className: "text-sm font-semibold text-mute underline underline-offset-4 active:text-volt"
+    },
+    "지난 운동과 똑같이 불러오기"
+  )) : /* @__PURE__ */ React.createElement(React.Fragment, null, routineExercises.map((ex) => /* @__PURE__ */ React.createElement(
+    ExerciseCard,
+    {
+      key: ex.id,
+      exercise: ex,
+      sets: session[ex.id] || [],
+      onAddSet: addSet,
+      onChangeSet: changeSet,
+      onRemoveSet: removeSet,
+      onRemoveExercise: () => removeExercise(ex.id)
+    }
+  )), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setModal("picker"),
+      className: "w-full rounded-2xl border-2 border-dashed border-line py-4 text-base font-bold text-mute active:scale-[0.99] active:border-volt active:text-volt"
+    },
+    "＋ 운동 추가 / 편집"
+  ))), /* @__PURE__ */ React.createElement("div", { className: "safe-bottom fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md border-t border-line bg-base/95 p-4 backdrop-blur" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: saveToday,
+      className: "w-full rounded-2xl bg-volt py-4 text-lg font-extrabold text-base active:scale-[0.99]"
+    },
+    "오늘 운동 저장"
+  )), toast && /* @__PURE__ */ React.createElement("div", { className: "fixed inset-x-0 bottom-24 z-50 mx-auto w-fit rounded-full px-5 py-2.5 text-sm font-semibold shadow-lg " + (toast.kind === "danger" ? "bg-danger text-white" : "bg-ok text-base") }, toast.msg), modal === "picker" && /* @__PURE__ */ React.createElement(
+    PickerSheet,
+    {
+      allExercises,
+      routine,
+      onToggle: toggleRoutine,
+      onAddCustom: (name, part) => {
+        const id = "u" + uid();
+        setCustomExercises((p) => [...p, { id, name, part, custom: true }]);
+        setRoutine((p) => [...p, id]);
+        showToast("종목을 만들어 오늘 루틴에 담았습니다.");
+      },
+      onDeleteCustom: (id) => {
+        setCustomExercises((p) => p.filter((e) => e.id !== id));
+        setRoutine((p) => p.filter((x) => x !== id));
+      },
+      onLoadLast: loadLastRoutine,
+      onClose: () => setModal(null)
+    }
+  ), modal === "calendar" && /* @__PURE__ */ React.createElement(
+    CalendarSheet,
+    {
+      history,
+      onDelete: (key) => setHistory((p) => {
+        const c = __spreadValues({}, p);
+        delete c[key];
+        return c;
+      }),
+      onClose: () => setModal(null)
+    }
+  ), modal === "progress" && /* @__PURE__ */ React.createElement(ProgressSheet, { history, onClose: () => setModal(null) }), modal === "backup" && /* @__PURE__ */ React.createElement(
+    BackupSheet,
+    {
+      buildData: () => ({ version: 2, customExercises, history, session, routine, sessionDate, exportedAt: (/* @__PURE__ */ new Date()).toISOString() }),
+      applyData: (data) => {
+        setCustomExercises(data.customExercises || []);
+        setHistory(data.history || {});
+        if (data.session) setSession(data.session);
+        if (data.routine) setRoutine(data.routine);
+        if (data.sessionDate) setSessionDate(data.sessionDate);
+      },
+      showToast,
+      onClose: () => setModal(null)
+    }
+  ));
+}
+function PickerSheet({ allExercises, routine, onToggle, onAddCustom, onDeleteCustom, onLoadLast, onClose }) {
+  const [parts, setParts] = useState([]);
+  const [showNew, setShowNew] = useState(false);
+  const [name, setName] = useState("");
+  const [newPart, setNewPart] = useState(PARTS[0]);
+  const togglePart = (p) => setParts((prev) => prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]);
+  const list = parts.length === 0 ? allExercises : allExercises.filter((e) => parts.includes(e.part));
+  return /* @__PURE__ */ React.createElement(Sheet, { title: "운동 담기", onClose }, /* @__PURE__ */ React.createElement("div", { className: "-mx-1 mb-3 flex gap-2 overflow-x-auto px-1 pb-1 noscroll" }, PARTS.map((p) => {
+    const on = parts.includes(p);
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: p,
+        onClick: () => togglePart(p),
+        className: "shrink-0 rounded-full px-4 py-2 text-sm font-bold transition " + (on ? "bg-volt text-base shadow-[0_0_18px_-2px_#f5b301]" : "bg-elevated text-mute")
+      },
+      p
+    );
+  })), /* @__PURE__ */ React.createElement("div", { className: "mb-3 flex gap-2" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setShowNew((v) => !v),
+      className: "flex-1 rounded-xl bg-elevated py-2.5 text-sm font-semibold text-ink active:scale-[0.99]"
+    },
+    "＋ 새 종목 만들기"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onLoadLast,
+      className: "flex-1 rounded-xl bg-elevated py-2.5 text-sm font-semibold text-ink active:scale-[0.99]"
+    },
+    "↺ 지난 운동 불러오기"
+  )), showNew && /* @__PURE__ */ React.createElement("div", { className: "mb-4 rounded-2xl bg-base p-3" }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      value: name,
+      onChange: (e) => setName(e.target.value),
+      placeholder: "운동 이름 (예: 케이블 크로스오버)",
+      className: "w-full rounded-xl bg-surface px-4 py-3 text-ink placeholder-dim outline-none"
+    }
+  ), /* @__PURE__ */ React.createElement("div", { className: "mt-2 flex flex-wrap gap-2" }, PARTS.map((p) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: p,
+      onClick: () => setNewPart(p),
+      className: "rounded-full px-3 py-1.5 text-sm font-bold " + (newPart === p ? "bg-volt text-base" : "bg-elevated text-mute")
+    },
+    p
+  ))), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => {
+        if (name.trim()) {
+          onAddCustom(name.trim(), newPart);
+          setName("");
+          setShowNew(false);
+        }
+      },
+      className: "mt-3 w-full rounded-xl bg-volt py-2.5 font-bold text-base active:scale-[0.99]"
+    },
+    "만들고 담기"
+  )), /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, list.map((e) => {
+    const on = routine.includes(e.id);
+    return /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        key: e.id,
+        className: "flex items-center justify-between rounded-2xl border p-3 transition " + (on ? "border-volt bg-volt/10" : "border-line bg-base")
+      },
+      /* @__PURE__ */ React.createElement("button", { onClick: () => onToggle(e.id), className: "flex flex-1 items-center gap-3 text-left" }, /* @__PURE__ */ React.createElement("span", { className: "flex h-7 w-7 items-center justify-center rounded-lg text-sm font-bold " + (on ? "bg-volt text-base" : "bg-elevated text-dim") }, on ? "✓" : "＋"), /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("span", { className: "font-semibold text-ink" }, e.name), /* @__PURE__ */ React.createElement("span", { className: "ml-2 text-xs text-dim" }, e.part))),
+      e.custom && /* @__PURE__ */ React.createElement("button", { onClick: () => onDeleteCustom(e.id), className: "ml-2 text-xs text-danger active:scale-90" }, "삭제")
+    );
+  })), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: onClose,
+      className: "mt-5 w-full rounded-2xl bg-volt py-3.5 text-base font-bold text-base active:scale-[0.99]"
+    },
+    "완료 (",
+    routine.length,
+    "개 담김)"
+  ));
+}
+function HistorySheet({ history, onDelete, onClose }) {
+  const dates = Object.keys(history).sort().reverse();
+  const [open, setOpen] = useState(null);
+  return /* @__PURE__ */ React.createElement(Sheet, { title: "운동 기록", onClose }, dates.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "py-10 text-center text-mute" }, "아직 저장된 기록이 없습니다.") : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, dates.map((key) => {
+    const day = history[key];
+    const totalSets = day.entries.reduce((a, en) => a + en.sets.length, 0);
+    const totalVol = day.entries.reduce((a, en) => a + en.sets.reduce((b, s) => b + (s.weight * s.reps || 0), 0), 0);
+    const isOpen = open === key;
+    return /* @__PURE__ */ React.createElement("div", { key, className: "rounded-2xl bg-base p-4" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between", onClick: () => setOpen(isOpen ? null : key) }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "font-bold text-ink" }, fmtHeader(key)), /* @__PURE__ */ React.createElement("p", { className: "text-xs text-mute tnum" }, day.entries.length, "종목 · ", totalSets, "세트 · ", totalVol.toLocaleString(), "kg")), /* @__PURE__ */ React.createElement("span", { className: "text-mute" }, isOpen ? "▲" : "▼")), isOpen && /* @__PURE__ */ React.createElement("div", { className: "mt-3 space-y-3 border-t border-line pt-3" }, day.entries.map((en) => /* @__PURE__ */ React.createElement("div", { key: en.exerciseId }, /* @__PURE__ */ React.createElement("p", { className: "text-sm font-semibold text-volt" }, en.name), /* @__PURE__ */ React.createElement("div", { className: "mt-1 space-y-0.5" }, en.sets.map((s, i) => /* @__PURE__ */ React.createElement("p", { key: s.id, className: "text-sm text-mute tnum" }, i + 1, "세트 · ", s.weight, "kg × ", s.reps, "회", s.memo ? /* @__PURE__ */ React.createElement("span", { className: "text-dim" }, " — ", s.memo) : null))))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => onDelete(key),
+        className: "mt-2 w-full rounded-xl bg-elevated py-2 text-sm text-danger active:scale-[0.99]"
+      },
+      "이 날 기록 삭제"
+    )));
+  })));
+}
+function BackupSheet({ buildData, applyData, showToast, onClose }) {
+  const fileRef = useRef(null);
+  const [busy, setBusy] = useState("");
+  const exportJson = () => {
+    const blob = new Blob([JSON.stringify(buildData(), null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `gymlog-${todayKey()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("백업 파일을 내보냈습니다.");
+  };
+  const importJson = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        applyData(JSON.parse(reader.result));
+        showToast("백업을 불러왔습니다.");
+        onClose();
+      } catch (err) {
+        showToast("파일을 읽을 수 없습니다.", "danger");
+      }
+    };
+    reader.readAsText(f);
+  };
+  const gdUpload = async () => {
+    try {
+      setBusy("up");
+      await driveUpload(JSON.stringify(buildData()));
+      showToast("구글 드라이브에 백업했습니다.");
+    } catch (err) {
+      showToast(err.message, "danger");
+    } finally {
+      setBusy("");
+    }
+  };
+  const gdDownload = async () => {
+    try {
+      setBusy("down");
+      const data = await driveDownload();
+      applyData(data);
+      showToast("드라이브에서 불러왔습니다.");
+      onClose();
+    } catch (err) {
+      showToast(err.message, "danger");
+    } finally {
+      setBusy("");
+    }
+  };
+  return /* @__PURE__ */ React.createElement(Sheet, { title: "백업 · 복원", onClose }, /* @__PURE__ */ React.createElement("p", { className: "mb-2 text-sm text-mute" }, "파일로 저장"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-2" }, /* @__PURE__ */ React.createElement("button", { onClick: exportJson, className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99]" }, "📤 파일 내보내기"), /* @__PURE__ */ React.createElement("button", { onClick: () => fileRef.current.click(), className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99]" }, "📥 파일 불러오기"), /* @__PURE__ */ React.createElement("input", { ref: fileRef, type: "file", accept: "application/json,.json", onChange: importJson, className: "hidden" })), /* @__PURE__ */ React.createElement("p", { className: "mb-2 mt-6 text-sm text-mute" }, "구글 드라이브"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-2" }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: gdUpload,
+      disabled: !!busy,
+      className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99] disabled:opacity-50"
+    },
+    busy === "up" ? "업로드 중…" : "☁️ 드라이브 백업"
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: gdDownload,
+      disabled: !!busy,
+      className: "rounded-xl bg-elevated py-3 font-semibold text-ink active:scale-[0.99] disabled:opacity-50"
+    },
+    busy === "down" ? "불러오는 중…" : "⬇️ 드라이브 복원"
+  )), !GOOGLE_CLIENT_ID && /* @__PURE__ */ React.createElement("p", { className: "mt-3 rounded-xl bg-base p-3 text-xs leading-relaxed text-dim" }, "구글 드라이브를 쓰려면 코드 상단의 ", /* @__PURE__ */ React.createElement("b", { className: "text-mute" }, "GOOGLE_CLIENT_ID"), "를 본인 값으로 설정하고, 앱을 https 주소에 올린 뒤(예: GitHub Pages) 그 주소를 OAuth 승인 원본에 등록하세요. 파일 내보내기/불러오기는 지금도 바로 됩니다."));
+}
+function LineChart({ points }) {
+  const W = 320, H = 180, padL = 38, padR = 14, padT = 16, padB = 26;
+  if (!points.length) return null;
+  const vals = points.map((p) => p.value);
+  let min = Math.min(...vals), max = Math.max(...vals);
+  if (min === max) {
+    min = Math.max(0, min - 5);
+    max = max + 5;
+  }
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+  const X = (i) => padL + (points.length === 1 ? innerW / 2 : i / (points.length - 1) * innerW);
+  const Y = (v) => padT + innerH - (v - min) / (max - min) * innerH;
+  const line = points.map((p, i) => `${X(i)},${Y(p.value)}`).join(" ");
+  const area = `${X(0)},${padT + innerH} ${line} ${X(points.length - 1)},${padT + innerH}`;
+  const grid = [max, (max + min) / 2, min];
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: `0 0 ${W} ${H}`, className: "w-full" }, grid.map((v, i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("line", { x1: padL, y1: Y(v), x2: W - padR, y2: Y(v), stroke: "#2a2f39", strokeWidth: "1" }), /* @__PURE__ */ React.createElement("text", { x: padL - 6, y: Y(v) + 4, textAnchor: "end", fontSize: "10", fill: "#697180" }, Math.round(v)))), /* @__PURE__ */ React.createElement("polygon", { points: area, fill: "#f5b30122" }), /* @__PURE__ */ React.createElement("polyline", { points: line, fill: "none", stroke: "#f5b301", strokeWidth: "2.5", strokeLinejoin: "round", strokeLinecap: "round" }), points.map((p, i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: X(i), cy: Y(p.value), r: i === points.length - 1 ? 4.5 : 3, fill: "#f5b301" })), /* @__PURE__ */ React.createElement("text", { x: X(0), y: H - 8, textAnchor: "start", fontSize: "10", fill: "#697180" }, points[0].label), points.length > 1 && /* @__PURE__ */ React.createElement("text", { x: X(points.length - 1), y: H - 8, textAnchor: "end", fontSize: "10", fill: "#697180" }, points[points.length - 1].label));
+}
+function ProgressSheet({ history, onClose }) {
+  const exOptions = useMemo(() => {
+    const map = {};
+    Object.values(history).forEach((d) => d.entries.forEach((en) => {
+      if (!map[en.exerciseId]) map[en.exerciseId] = en.name;
+    }));
+    return Object.entries(map).map(([id, name]) => ({ id, name }));
+  }, [history]);
+  const [selId, setSelId] = useState(exOptions[0] ? exOptions[0].id : "");
+  const [metric, setMetric] = useState("weight");
+  useEffect(() => {
+    if (!selId && exOptions[0]) setSelId(exOptions[0].id);
+  }, [exOptions, selId]);
+  const series = useMemo(() => {
+    const dates = Object.keys(history).sort();
+    const arr = [];
+    dates.forEach((dk) => {
+      const en = history[dk].entries.find((e) => e.exerciseId === selId);
+      if (en && en.sets.length) {
+        arr.push({
+          date: dk,
+          maxW: Math.max(...en.sets.map((s) => s.weight || 0)),
+          vol: en.sets.reduce((a, s) => a + (s.weight * s.reps || 0), 0)
+        });
+      }
+    });
+    return arr;
+  }, [history, selId]);
+  const points = series.map((s) => ({ label: fmtShort(s.date), value: metric === "weight" ? s.maxW : s.vol }));
+  const first = points.length ? points[0].value : null;
+  const last = points.length ? points[points.length - 1].value : null;
+  const delta = first != null ? last - first : 0;
+  const deltaText = delta === 0 ? "±0" : delta > 0 ? "▲ +" + delta : "▼ " + delta;
+  return /* @__PURE__ */ React.createElement(Sheet, { title: "성장 그래프", onClose }, exOptions.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "py-10 text-center text-mute" }, "운동을 저장하면 여기서 무게 변화를 볼 수 있어요.") : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: selId,
+      onChange: (e) => setSelId(e.target.value),
+      className: "w-full rounded-xl bg-base px-4 py-3 text-ink outline-none"
+    },
+    exOptions.map((o) => /* @__PURE__ */ React.createElement("option", { key: o.id, value: o.id }, o.name))
+  ), /* @__PURE__ */ React.createElement("div", { className: "mt-3 flex gap-2" }, [["weight", "최고 중량"], ["volume", "총 볼륨"]].map(([k, l]) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: k,
+      onClick: () => setMetric(k),
+      className: "flex-1 rounded-xl py-2 text-sm font-bold " + (metric === k ? "bg-volt text-base" : "bg-elevated text-mute")
+    },
+    l
+  ))), points.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "py-8 text-center text-mute" }, "이 운동의 기록이 없습니다.") : /* @__PURE__ */ React.createElement("div", { className: "mt-4 rounded-2xl bg-base p-4" }, /* @__PURE__ */ React.createElement("div", { className: "mb-2 flex items-end justify-between" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-dim" }, "현재"), /* @__PURE__ */ React.createElement("p", { className: "text-2xl font-extrabold text-ink tnum" }, last, /* @__PURE__ */ React.createElement("span", { className: "text-sm text-dim" }, " kg"))), /* @__PURE__ */ React.createElement("div", { className: "text-right" }, /* @__PURE__ */ React.createElement("p", { className: "text-xs text-dim" }, "처음 기록 대비"), /* @__PURE__ */ React.createElement("p", { className: "text-lg font-bold tnum " + (delta > 0 ? "text-ok" : delta < 0 ? "text-danger" : "text-mute") }, deltaText, " kg"))), /* @__PURE__ */ React.createElement(LineChart, { points }), points.length < 2 && /* @__PURE__ */ React.createElement("p", { className: "mt-2 text-center text-xs text-dim" }, "2회 이상 기록하면 추세선이 그려져요."))));
+}
+function CalendarSheet({ history, onDelete, onClose }) {
+  const now = /* @__PURE__ */ new Date();
+  const [ym, setYm] = useState({ y: now.getFullYear(), m: now.getMonth() });
+  const [selDay, setSelDay] = useState(null);
+  const cell = (d) => `${ym.y}-${pad(ym.m + 1)}-${pad(d)}`;
+  const startW = new Date(ym.y, ym.m, 1).getDay();
+  const daysIn = new Date(ym.y, ym.m + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < startW; i++) cells.push(null);
+  for (let d = 1; d <= daysIn; d++) cells.push(d);
+  const monthPrefix = `${ym.y}-${pad(ym.m + 1)}-`;
+  const countThisMonth = Object.keys(history).filter((k) => k.startsWith(monthPrefix)).length;
+  const tKey = todayKey();
+  const prev = () => {
+    setSelDay(null);
+    setYm((s) => s.m === 0 ? { y: s.y - 1, m: 11 } : { y: s.y, m: s.m - 1 });
+  };
+  const next = () => {
+    setSelDay(null);
+    setYm((s) => s.m === 11 ? { y: s.y + 1, m: 0 } : { y: s.y, m: s.m + 1 });
+  };
+  const day = selDay ? history[selDay] : null;
+  return /* @__PURE__ */ React.createElement(Sheet, { title: "운동 달력", onClose }, /* @__PURE__ */ React.createElement("div", { className: "mb-3 flex items-center justify-between" }, /* @__PURE__ */ React.createElement("button", { onClick: prev, className: "h-9 w-9 rounded-lg bg-elevated text-lg text-mute active:scale-90" }, "‹"), /* @__PURE__ */ React.createElement("p", { className: "font-bold text-ink" }, ym.y, "년 ", ym.m + 1, "월"), /* @__PURE__ */ React.createElement("button", { onClick: next, className: "h-9 w-9 rounded-lg bg-elevated text-lg text-mute active:scale-90" }, "›")), /* @__PURE__ */ React.createElement("p", { className: "mb-2 text-center text-xs text-mute" }, "이번 달 ", /* @__PURE__ */ React.createElement("b", { className: "text-volt" }, countThisMonth), "일 운동"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-7 gap-1 text-center" }, ["일", "월", "화", "수", "목", "금", "토"].map((w) => /* @__PURE__ */ React.createElement("div", { key: w, className: "py-1 text-xs text-dim" }, w)), cells.map((d, i) => {
+    if (d === null) return /* @__PURE__ */ React.createElement("div", { key: i });
+    const key = cell(d);
+    const has = !!history[key];
+    const isToday = key === tKey;
+    const isSel = key === selDay;
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: i,
+        onClick: () => has && setSelDay(isSel ? null : key),
+        className: "relative flex aspect-square items-center justify-center rounded-lg text-sm " + (isSel ? "bg-volt text-base font-bold" : has ? "bg-volt/15 text-ink font-bold" : "text-mute") + (isToday && !isSel ? " ring-1 ring-volt" : "")
+      },
+      d,
+      has && !isSel && /* @__PURE__ */ React.createElement("span", { className: "absolute bottom-1 h-1 w-1 rounded-full bg-volt" })
+    );
+  })), day && /* @__PURE__ */ React.createElement("div", { className: "mt-4 rounded-2xl bg-base p-4" }, /* @__PURE__ */ React.createElement("p", { className: "mb-2 font-bold text-ink" }, fmtHeader(selDay)), /* @__PURE__ */ React.createElement("div", { className: "space-y-3" }, day.entries.map((en) => /* @__PURE__ */ React.createElement("div", { key: en.exerciseId }, /* @__PURE__ */ React.createElement("p", { className: "text-sm font-semibold text-volt" }, en.name), /* @__PURE__ */ React.createElement("div", { className: "mt-1 space-y-0.5" }, en.sets.map((s, i) => /* @__PURE__ */ React.createElement("p", { key: s.id, className: "text-sm text-mute tnum" }, i + 1, "세트 · ", s.weight, "kg × ", s.reps, "회", s.memo ? /* @__PURE__ */ React.createElement("span", { className: "text-dim" }, " — ", s.memo) : null)))))), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => {
+        onDelete(selDay);
+        setSelDay(null);
+      },
+      className: "mt-3 w-full rounded-xl bg-elevated py-2 text-sm text-danger active:scale-[0.99]"
+    },
+    "이 날 기록 삭제"
+  )));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(/* @__PURE__ */ React.createElement(App, null));
+
+  </script>
+</body>
+</html>
