@@ -44,12 +44,17 @@
 </head>
 <body>
   <div id="root"><p style="padding:24px;color:#9aa3b2;font-family:sans-serif">로딩 중… (인터넷 연결이 필요합니다)</p></div>
+  
   <script>
-window.addEventListener("error", function(e){
-  var r=document.getElementById("root");
-  if(r) r.innerHTML = '<div style="padding:24px;color:#ff5a52;font-family:sans-serif;line-height:1.6">앱 로딩 중 오류가 발생했습니다.<br>인터넷 연결을 확인하거나, 파일을 https 주소(예: GitHub Pages)에 올려 열어보세요.<br><br><span style="color:#697180;font-size:12px">오류: '+ (e.message||"") +'</span></div>';
-});
-if(window.__loadFail){ throw new Error("React 라이브러리를 불러오지 못했습니다 (오프라인?)"); }
+    window.addEventListener("error", function(e){
+      var r=document.getElementById("root");
+      if(r) r.innerHTML = '<div style="padding:24px;color:#ff5a52;font-family:sans-serif;line-height:1.6">앱 로딩 중 오류가 발생했습니다.<br>이 화면이 계속된다면 코드 복사 과정에서 누락된 부분이 있을 수 있습니다.<br><br><span style="color:#697180;font-size:12px">오류 내용: '+ (e.message||"문법 오류(Syntax Error) 또는 통신 실패") +'</span></div>';
+    });
+  </script>
+
+  <script>
+if(window.__loadFail){ throw new Error("React 라이브러리를 인터넷에서 불러오지 못했습니다. 모바일 네트워크 연결을 확인해주세요."); }
+
 var __defProp = Object.defineProperty;
 var __defProps = Object.defineProperties;
 var __getOwnPropDescs = Object.getOwnPropertyDescriptors;
@@ -214,3 +219,91 @@ function IconBtn({ children, onClick, label }) {
     "button",
     {
       onClick,
+      "aria-label": label,
+      className: "flex h-11 w-11 items-center justify-center rounded-xl bg-elevated text-lg active:scale-90"
+    },
+    children
+  );
+}
+
+function Stepper({ value, onChange, step, min = 0, unit }) {
+  const set = (v) => onChange(Math.max(min, Math.round(v * 100) / 100));
+  return React.createElement("div", { className: "flex items-center gap-2" }, React.createElement(
+    "button",
+    {
+      onClick: () => set(value - step),
+      className: "h-12 w-12 shrink-0 rounded-xl bg-elevated text-2xl font-bold text-ink active:scale-90 transition-transform",
+      "aria-label": "감소"
+    },
+    "−"
+  ), React.createElement("div", { className: "flex min-w-[92px] items-baseline justify-center rounded-xl bg-base px-2 py-1" }, React.createElement(
+    "input",
+    {
+      type: "number",
+      inputMode: "decimal",
+      value: value === 0 ? "" : value,
+      placeholder: "0",
+      onChange: (e) => set(e.target.value === "" ? 0 : parseFloat(e.target.value)),
+      onFocus: (e) => e.target.select(),
+      className: "w-14 bg-transparent text-center text-2xl font-bold text-ink outline-none tnum"
+    }
+  ), React.createElement("span", { className: "text-sm text-dim" }, unit)), React.createElement(
+    "button",
+    {
+      onClick: () => set(value + step),
+      className: "h-12 w-12 shrink-0 rounded-xl bg-volt text-2xl font-bold text-base active:scale-90 transition-transform",
+      "aria-label": "증가"
+    },
+    "＋"
+  ));
+}
+
+function SetRow({ index, set, onChange, onRemove }) {
+  return React.createElement("div", { className: "rounded-2xl bg-surface p-3" }, React.createElement("div", { className: "mb-2 flex items-center justify-between" }, React.createElement("span", { className: "rounded-lg bg-elevated px-2.5 py-1 text-sm font-bold text-volt" }, index + 1, "세트"), React.createElement(
+    "button",
+    {
+      onClick: onRemove,
+      className: "flex h-9 w-9 items-center justify-center rounded-lg text-danger active:scale-90",
+      "aria-label": "세트 삭제"
+    },
+    "✕"
+  )), React.createElement("div", { className: "flex items-center justify-between gap-2 py-1" }, React.createElement("span", { className: "w-9 text-sm text-mute" }, "무게"), React.createElement(Stepper, { value: set.weight, onChange: (v) => onChange(__spreadProps(__spreadValues({}, set), { weight: v })), step: 2.5, unit: "kg" })), React.createElement("div", { className: "flex items-center justify-between gap-2 py-1" }, React.createElement("span", { className: "w-9 text-sm text-mute" }, "횟수"), React.createElement(Stepper, { value: set.reps, onChange: (v) => onChange(__spreadProps(__spreadValues({}, set), { reps: v })), step: 1, unit: "회" })), React.createElement("div", { className: "mt-2 flex items-center gap-2" }, React.createElement("span", { className: "text-mute" }, "📝"), React.createElement(
+    "input",
+    {
+      value: set.memo,
+      onChange: (e) => onChange(__spreadProps(__spreadValues({}, set), { memo: e.target.value })),
+      placeholder: "메모 (예: 반동 씀 / 마지막 세트 힘듦)",
+      className: "w-full rounded-lg bg-base px-3 py-2 text-sm text-ink placeholder-dim outline-none"
+    }
+  )));
+}
+function ExerciseCard({ exercise, sets, onAddSet, onChangeSet, onRemoveSet, onRemoveExercise }) {
+  const volume = sets.reduce((a, s) => a + (s.weight * s.reps || 0), 0);
+  return React.createElement("div", { className: "rounded-3xl border border-line bg-elevated/40 p-4" }, React.createElement("div", { className: "mb-2 flex items-center justify-between" }, React.createElement("div", { className: "flex items-center gap-2" }, React.createElement("h3", { className: "text-lg font-bold text-ink" }, exercise.name), React.createElement("span", { className: "rounded-full bg-elevated px-2.5 py-0.5 text-xs text-mute" }, exercise.part)), React.createElement(
+    "button",
+    {
+      onClick: onRemoveExercise,
+      className: "flex h-9 w-9 items-center justify-center rounded-lg bg-elevated text-mute active:scale-90",
+      "aria-label": "루틴에서 빼기"
+    },
+    "✕"
+  )), sets.length > 0 && React.createElement("div", { className: "mb-1 flex items-center justify-between text-xs text-dim" }, React.createElement("span", null, sets.length, "세트"), React.createElement("span", { className: "tnum" }, "볼륨 ", volume.toLocaleString(), " kg")), React.createElement("div", { className: "flex flex-col gap-2" }, sets.map((s, i) => React.createElement(
+    SetRow,
+    {
+      key: s.id,
+      index: i,
+      set: s,
+      onChange: (ns) => onChangeSet(exercise.id, s.id, ns),
+      onRemove: () => onRemoveSet(exercise.id, s.id)
+    }
+  ))), React.createElement(
+    "button",
+    {
+      onClick: () => onAddSet(exercise.id),
+      className: "mt-3 w-full rounded-2xl border-2 border-dashed border-line py-3 text-base font-semibold text-mute active:scale-[0.99] active:border-volt active:text-volt"
+    },
+    "＋ 세트 추가"
+  ));
+}
+
+function Sheet({ title, onClose, action, children })
